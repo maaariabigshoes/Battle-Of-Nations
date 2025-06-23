@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Battle of Nations</title>
+  <link rel="icon" href="img/BattleOfNations.png" type="image/png">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: #000;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+    }
+    #titulo {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 8%;
+      height: auto;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #botaoEsc {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      width: 40px;
+      height: auto;
+      z-index: 10;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Imagem centralizada no topo -->
+  <img src="img/BattleOfNations.png" id="titulo" alt="Battle of Nations" />
+  
+  <!-- Botão ESC no canto superior esquerdo -->
+  <img src="img/esc.png" id="botaoEsc" alt="ESC" onclick="window.history.back()" />
+
+  <!-- Canvas de fundo -->
+  <canvas id="fundo"></canvas>
+
+  <script>
+    const canvas = document.getElementById('fundo');
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    window.addEventListener('resize', () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      atualizarPosicoes();
+    });
+
+    const imagemFundo = new Image();
+    imagemFundo.src = "img/Selection.png";
+
+    const imagemSul = new Image();
+    imagemSul.src = "img/AmericaDoSul.png";
+
+    const imagemNorte = new Image();
+    imagemNorte.src = "img/AmericaDoNorte.png";
+
+    const imagemEuropa = new Image();
+    imagemEuropa.src = "img/Europa.png";
+
+    const imagemAsia = new Image();
+    imagemAsia.src = "img/Asia.png";
+
+    const imagemAfrica = new Image();
+    imagemAfrica.src = "img/Africa.png";
+
+    const imagemOceania = new Image();
+    imagemOceania.src = "img/Oceania.png";
+
+    let brilhoFundo = 0.7;
+    let aumentando = true;
+
+    const estado = {
+      sul: { saturacao: 0, brilho: 1, opacidade: 0.5, mouseSobre: false },
+      norte: { saturacao: 0, brilho: 1, opacidade: 0.5, mouseSobre: false },
+      europa: { saturacao: 0, brilho: 1, opacidade: 0.5, mouseSobre: false },
+      asia: { saturacao: 0, brilho: 1, opacidade: 0.5, mouseSobre: false },
+      africa: { saturacao: 0, brilho: 1, opacidade: 0.5, mouseSobre: false },
+      oceania: { saturacao: 0, brilho: 1, opacidade: 0.5, mouseSobre: false }
+    };
+
+    const escala = {
+      sul: 0.8,
+      norte: 0.5,
+      europa: 0.45,
+      asia: 0.6,
+      africa: 0.6,
+      oceania: 0.5
+    };
+
+    const pos = {
+      sul: { x: 200, y: 0 },
+      norte: { x: 220, y: 0 },
+      europa: { x: 0, y: 0 },
+      asia: { x: 0, y: 0 },
+      africa: { x: 0, y: 0 },
+      oceania: { x: 0, y: 0 }
+    };
+
+    const deslocamentoY = 10;
+    const deslocamentoNorteY = -15;
+
+    function atualizarPosicoes() {
+      pos.sul.y = height - imagemSul.height * escala.sul + deslocamentoY;
+      pos.norte.y = pos.sul.y - (imagemNorte.height * escala.norte) - 7 + deslocamentoNorteY;
+      pos.europa.x = pos.norte.x + imagemNorte.width * escala.norte + 10;
+      pos.europa.y = pos.norte.y;
+      pos.asia.x = pos.europa.x + imagemEuropa.width * escala.europa - 130;
+      pos.asia.y = pos.europa.y + 3;
+      pos.africa.x = pos.europa.x;
+      pos.africa.y = pos.europa.y + imagemEuropa.height * escala.europa + 200;
+      pos.oceania.x = pos.africa.x + imagemAfrica.width * escala.africa + 120;
+      pos.oceania.y = pos.africa.y + 50;
+    }
+
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      for (let nome in pos) {
+        const img = eval("imagem" + nome.charAt(0).toUpperCase() + nome.slice(1));
+        const w = img.width * escala[nome];
+        const h = img.height * escala[nome];
+        estado[nome].mouseSobre = (
+          mouseX >= pos[nome].x && mouseX <= pos[nome].x + w &&
+          mouseY >= pos[nome].y && mouseY <= pos[nome].y + h
+        );
+      }
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      for (let nome in estado) estado[nome].mouseSobre = false;
+    });
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      for (let nome in pos) {
+        const img = eval("imagem" + nome.charAt(0).toUpperCase() + nome.slice(1));
+        const w = img.width * escala[nome];
+        const h = img.height * escala[nome];
+        const x = pos[nome].x;
+        const y = pos[nome].y;
+
+        if (
+          mouseX >= x && mouseX <= x + w &&
+          mouseY >= y && mouseY <= y + h
+        ) {
+          if (nome === "africa" || nome === "oceania") {
+            alert("Ainda não há tanques nesta região.");
+          } else {
+            window.location.href = nome + ".html";
+          }
+          break;
+        }
+      }
+    });
+
+    function desenhar() {
+      ctx.clearRect(0, 0, width, height);
+
+      if (aumentando) {
+        brilhoFundo += 0.01;
+        if (brilhoFundo >= 1.3) aumentando = false;
+      } else {
+        brilhoFundo -= 0.01;
+        if (brilhoFundo <= 0.7) aumentando = true;
+      }
+
+      ctx.filter = `brightness(${brilhoFundo})`;
+      ctx.drawImage(imagemFundo, 0, 0, width, height);
+      ctx.filter = "none";
+
+      for (let nome in pos) {
+        const est = estado[nome];
+        const img = eval("imagem" + nome.charAt(0).toUpperCase() + nome.slice(1));
+        const esc = escala[nome];
+        const { x, y } = pos[nome];
+        const w = img.width * esc;
+        const h = img.height * esc;
+
+        if (est.mouseSobre) {
+          if (est.saturacao < 1.2) est.saturacao += 0.1;
+          if (est.brilho < 2.5) est.brilho += 0.1;
+          if (est.opacidade < 1) est.opacidade += 0.05;
+        } else {
+          if (est.saturacao > 0) est.saturacao -= 0.1;
+          if (est.brilho > 1) est.brilho -= 0.1;
+          if (est.opacidade > 0.5) est.opacidade -= 0.05;
+        }
+
+        ctx.globalAlpha = est.opacidade;
+        ctx.filter = `saturate(${Math.max(0, est.saturacao)}) brightness(${est.brilho})`;
+        ctx.drawImage(img, x, y, w, h);
+        ctx.filter = "none";
+        ctx.globalAlpha = 1;
+      }
+
+      requestAnimationFrame(desenhar);
+    }
+
+    let carregadas = 0;
+    function verificarCarregamento() {
+      carregadas++;
+      if (carregadas === 7) {
+        atualizarPosicoes();
+        desenhar();
+      }
+    }
+
+    imagemFundo.onload = verificarCarregamento;
+    imagemSul.onload = verificarCarregamento;
+    imagemNorte.onload = verificarCarregamento;
+    imagemEuropa.onload = verificarCarregamento;
+    imagemAsia.onload = verificarCarregamento;
+    imagemAfrica.onload = verificarCarregamento;
+    imagemOceania.onload = verificarCarregamento;
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        window.history.back();
+      }
+    });
+  </script>
+</body>
+</html>

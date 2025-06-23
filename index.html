@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cutscene</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .cutscene-img {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover; /* Garante que a imagem cubra toda a tela */
+      display: block;
+    }
+    .btn-avancar {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      padding: 16px 32px;
+      font-size: 1.2em;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <img src="./img/1.png" class="cutscene-img" alt="Cutscene">
+  <button class="btn-avancar" onclick="window.location.href='./cutscene2.html'">Avançar</button>
+</body>
+</html>

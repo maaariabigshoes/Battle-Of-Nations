@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Battle of Nations</title>
+  <link rel="icon" href="img/BattleOfNations.png" type="image/png">
+  <style>
+    @font-face {
+      font-family: 'FalturaGuerra';
+      src: url('font/Capture it.woff2') format('woff2'),
+           url('font/Capture it.woff') format('woff'),
+           url('font/Capture it.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background-image 0.5s ease;
+      color: white;
+      font-family: 'FalturaGuerra', Arial, sans-serif;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .header img {
+      max-width: 300px;
+      height: auto;
+    }
+
+    #botaoEsc {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      width: 40px;
+      height: auto;
+      z-index: 1000;
+      cursor: pointer;
+    }
+
+    .center-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 400px;
+    }
+
+    .box-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .arrow {
+      font-size: 50px;
+      color: white;
+      user-select: none;
+      cursor: pointer;
+      margin: 0 20px;
+      transition: color 0.3s ease;
+    }
+
+    .arrow:hover {
+      color: #ffcc00;
+    }
+
+    #colorBox {
+      width: 200px;
+      height: 200px;
+      object-fit: contain;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    #colorBox:hover {
+      filter: brightness(1.3) drop-shadow(0 0 10px white);
+      transform: scale(1.05);
+    }
+
+    .box-text {
+      margin-top: 20px;
+      font-size: 40px;
+      text-align: center;
+      text-shadow: 1px 1px 2px black;
+      min-width: 300px;
+      font-family: 'FalturaGuerra', Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botão ESC -->
+  <img src="img/esc.png" id="botaoEsc" alt="ESC" onclick="window.history.back()" />
+
+  <div class="header">
+    <img src="img/BattleOfNations.png" alt="Battle Of Nations" />
+  </div>
+
+  <div class="center-content">
+    <div class="box-row">
+      <div id="leftArrow" class="arrow">&#8592;</div>
+      <a id="boxLink" href="#" target="_blank">
+        <img id="colorBox" src="img/box1.png" alt="Imagem do quadrado" />
+      </a>
+      <div id="rightArrow" class="arrow">&#8594;</div>
+    </div>
+    <div id="boxText" class="box-text">Texto abaixo do quadrado vermelho</div>
+  </div>
+
+  <script>
+    const states = [
+      {
+        boxImg: 'img/USA.png',
+        backgroundImage: "url('img/NY.png')",
+        text: 'ESTADOS UNIDOS DA AMÉRICA',
+        link: 'EUA.html'
+      },
+    ];
+
+    let currentIndex = 0;
+
+    const colorBox = document.getElementById('colorBox');
+    const boxText = document.getElementById('boxText');
+    const body = document.body;
+    const boxLink = document.getElementById('boxLink');
+
+    function updateState(index) {
+      const state = states[index];
+      colorBox.src = state.boxImg;
+      body.style.backgroundImage = state.backgroundImage;
+      boxText.textContent = state.text;
+      boxLink.href = state.link;
+    }
+
+    document.getElementById('leftArrow').addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + states.length) % states.length;
+      updateState(currentIndex);
+    });
+
+    document.getElementById('rightArrow').addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % states.length;
+      updateState(currentIndex);
+    });
+
+    // Inicializa a primeira tela
+    updateState(currentIndex);
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        window.history.back();
+      }
+    });
+  </script>
+
+</body>
+</html>

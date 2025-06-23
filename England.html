@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Battle of Nations</title>
+    <link rel="icon" href="img/BattleOfNations.png" type="image/png">
+  <style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    border: 1px solid #000;
+  }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const frameWidth = 300;
+  const frameHeight = 300;
+  const columns = 2;
+  const escala = 1;
+  const margemBorda = 100;
+
+
+  let posX = 50;
+  let posY = 300;
+  let posXInimigo = 1200;
+  let posYInimigo = 300;
+
+  const velocidade = 20;
+  const velocidadeTiro = 10;
+
+  let tirosJogador = [];
+  let tirosInimigo = [];
+
+  let vidaJogador = 100;
+  let vidaInimigo = 100;
+
+  let corBarraJogador = 'green';
+  let corBarraInimigo = 'green';
+
+  const imgFundo = new Image();
+  imgFundo.src = "img/Crazydog.png";
+  const imgTanqueJogador = new Image();
+  imgTanqueJogador.src = "img/TanqueIEngland.png";
+  const imgTanqueInimigo = new Image();
+  imgTanqueInimigo.src = "img/TanqueIIEngland.png";
+
+  const imgTiroParaDireita = new Image();
+  imgTiroParaDireita.src = "img/balaDireita.png";
+  const imgTiroParaEsquerda = new Image();
+  imgTiroParaEsquerda.src = "img/balaEsquerda.png";
+
+  const tiroFrameWidth = 32;
+  const tiroFrameHeight = 32;
+  const tiroTotalFrames = 4;
+
+  let frameAtualJogador = 0;
+  let frameAtualInimigo = 0;
+  let animandoJogador = false;
+  let animandoInimigo = false;
+
+  let jogoFinalizado = false;
+
+  const obstaculo = {
+    x: () => (canvas.width - 100) / 2,
+    y: () => (canvas.height - 900) / 2,
+    width: 120,
+    height: 900
+  };
+
+  imgFundo.onload = draw;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw();
+  }
+
+  function draw() {
+    ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'transparent';
+    ctx.fillRect(obstaculo.x(), obstaculo.y(), obstaculo.width, obstaculo.height);
+
+    atualizarTiros();
+    desenharTiros();
+    desenharTanques();
+    desenharBarrasDeVida();
+
+    if (jogoFinalizado) return;
+  }
+
+  function desenharTanques() {
+    desenharTanque(imgTanqueJogador, frameAtualJogador, posX, posY);
+    desenharTanque(imgTanqueInimigo, frameAtualInimigo, posXInimigo, posYInimigo);
+  }
+
+  function desenharTanque(img, frameAtual, x, y) {
+    const col = frameAtual % columns;
+    const row = Math.floor(frameAtual / columns);
+ctx.drawImage(img, col * frameWidth, row * frameHeight, frameWidth, frameHeight, x, y, frameWidth * escala, frameHeight * escala);
+
+  }
+
+  function atualizarTiros() {
+    for (let i = tirosJogador.length - 1; i >= 0; i--) {
+      let t = tirosJogador[i];
+      t.x += velocidadeTiro;
+      t.frame = (t.frame + 1) % tiroTotalFrames;
+
+      if (t.x > canvas.width) {
+        tirosJogador.splice(i, 1);
+        continue;
+      }
+
+      if (colide(t.x, t.y, tiroFrameWidth, tiroFrameHeight, posXInimigo, posYInimigo, frameWidth, frameHeight)) {
+        vidaInimigo = Math.max(vidaInimigo - 5, 0);
+        corBarraInimigo = 'red';
+        setTimeout(() => corBarraInimigo = 'green', 100);
+        tirosJogador.splice(i, 1);
+      }
+    }
+
+    for (let i = tirosInimigo.length - 1; i >= 0; i--) {
+      let t = tirosInimigo[i];
+      t.x -= velocidadeTiro;
+      t.frame = (t.frame + 1) % tiroTotalFrames;
+
+      if (t.x < 0) {
+        tirosInimigo.splice(i, 1);
+        continue;
+      }
+
+      if (colide(t.x, t.y, tiroFrameWidth, tiroFrameHeight, posX, posY, frameWidth, frameHeight)) {
+        vidaJogador = Math.max(vidaJogador - 5, 0);
+        corBarraJogador = 'red';
+        setTimeout(() => corBarraJogador = 'green', 100);
+        tirosInimigo.splice(i, 1);
+      }
+    }
+
+    checarFimDeJogo();
+  }
+
+function checarFimDeJogo() {
+  if (jogoFinalizado) return;
+
+  if (vidaJogador <= 0 || vidaInimigo <= 0) {
+    jogoFinalizado = true;
+
+    // Limpa a tela e para o loop
+    setTimeout(() => {
+      mostrarTanqueVencedor(vidaJogador <= 0 ? 'inimigo' : 'jogador');
+
+      // Após exibir a imagem, esperar 3s para trocar de página
+      setTimeout(() => {
+        IrParaSelecaoCampo2();
+      }, 3000);
+    }, 1000); // 1 segundo após o fim para exibir o vencedor
+  }
+}
+
+function mostrarTanqueVencedor(vencedor) {
+  ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
+
+  let img, texto;
+  if (vencedor === 'jogador') {
+    img = imgTanqueJogador;
+    texto = "VENCEDOR!";
+  } else {
+    img = imgTanqueInimigo;
+    texto = "VENCEDOR!";
+  }
+
+  const centerX = (canvas.width - frameWidth) / 2;
+  const centerY = (canvas.height - frameHeight) / 2;
+
+  // Desenha o tanque vencedor no centro
+  ctx.drawImage(img, 0, 0, frameWidth, frameHeight, centerX, centerY, frameWidth, frameHeight);
+
+  // Exibir o texto logo abaixo da imagem
+  ctx.font = 'bold 40px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.fillText(texto, canvas.width / 2, centerY + frameHeight + 50);
+}
+
+  function colide(x1, y1, w1, h1, x2, y2, w2, h2) {
+    const margemTanque = 100;
+    const margemBala = 5;
+    return x1 + margemBala < x2 + w2 - margemTanque &&
+           x1 + w1 - margemBala > x2 + margemTanque &&
+           y1 + margemBala < y2 + h2 - margemTanque &&
+           y1 + h1 - margemBala > y2 + margemTanque;
+  }
+
+  function colideComObstaculo(x, y, largura, altura) {
+    return colide(
+      x, y, largura, altura,
+      obstaculo.x(), obstaculo.y(), obstaculo.width, obstaculo.height
+    );
+  }
+
+  function desenharTiros() {
+    for (let t of tirosJogador) {
+      ctx.drawImage(imgTiroParaDireita, t.frame * tiroFrameWidth, 0, tiroFrameWidth, tiroFrameHeight, t.x, t.y, tiroFrameWidth, tiroFrameHeight);
+    }
+
+    for (let t of tirosInimigo) {
+      ctx.drawImage(imgTiroParaEsquerda, t.frame * tiroFrameWidth, 0, tiroFrameWidth, tiroFrameHeight, t.x, t.y, tiroFrameWidth, tiroFrameHeight);
+    }
+  }
+
+  function desenharBarrasDeVida() {
+    ctx.fillStyle = 'black';
+    ctx.fillRect(20, 20, 200, 25);
+    ctx.fillStyle = corBarraJogador;
+    ctx.fillRect(20, 20, 2 * vidaJogador, 25);
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(20, 20, 200, 25);
+
+    const largura = 200;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(canvas.width - largura - 20, 20, largura, 25);
+    ctx.fillStyle = corBarraInimigo;
+    ctx.fillRect(canvas.width - largura - 20, 20, 2 * vidaInimigo, 25);
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(canvas.width - largura - 20, 20, largura, 25);
+  }
+
+  function animarTiroJogador() {
+    if (animandoJogador || jogoFinalizado) return;
+    animandoJogador = true;
+
+    tirosJogador.push({
+      x: posX + frameWidth,
+      y: posY + frameHeight / 2 - tiroFrameHeight / 2,
+      frame: 0
+    });
+
+    const sequencia = [2, 3, 2];
+    let i = 0;
+    function proximoFrame() {
+      frameAtualJogador = sequencia[i];
+      draw();
+      i++;
+      if (i < sequencia.length) setTimeout(proximoFrame, 150);
+      else animandoJogador = false;
+    }
+    proximoFrame();
+  }
+
+  function animarTiroInimigo() {
+    if (animandoInimigo || jogoFinalizado) return;
+    animandoInimigo = true;
+
+    tirosInimigo.push({
+      x: posXInimigo,
+      y: posYInimigo + frameHeight / 2 - tiroFrameHeight / 2,
+      frame: 0
+    });
+
+    const sequencia = [2, 3, 2];
+    let i = 0;
+    function proximoFrame() {
+      frameAtualInimigo = sequencia[i];
+      draw();
+      i++;
+      if (i < sequencia.length) setTimeout(proximoFrame, 150);
+      else animandoInimigo = false;
+    }
+    proximoFrame();
+  }
+
+  function exibirMensagemNoCanvas(texto) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, canvas.height / 2 - 60, canvas.width, 120);
+    ctx.font = 'bold 40px Arial';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText(texto, canvas.width / 2, canvas.height / 2 + 15);
+  }
+
+  function IrParaSelecaoCampo2() {
+    window.location.href = 'Selection.html';
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (jogoFinalizado) return;
+
+    const tecla = e.key.toLowerCase();
+    let movidoJogador = false;
+    let movidoInimigo = false;
+
+switch (tecla) {
+  case "w":
+    if (posY - velocidade >= -margemBorda && !colideComObstaculo(posX, posY - velocidade, frameWidth, frameHeight)) {
+      posY -= velocidade;
+      movidoJogador = true;
+    }
+    break;
+  case "s":
+    if (posY + frameHeight + velocidade <= canvas.height + margemBorda && !colideComObstaculo(posX, posY + velocidade, frameWidth, frameHeight)) {
+      posY += velocidade;
+      movidoJogador = true;
+    }
+    break;
+  case "a":
+    if (posX - velocidade >= -margemBorda && !colideComObstaculo(posX - velocidade, posY, frameWidth, frameHeight)) {
+      posX -= velocidade;
+      movidoJogador = true;
+    }
+    break;
+  case "d":
+    if (posX + frameWidth + velocidade <= canvas.width + margemBorda && !colideComObstaculo(posX + velocidade, posY, frameWidth, frameHeight)) {
+      posX += velocidade;
+      movidoJogador = true;
+    }
+    break;
+  case "f":
+    animarTiroJogador();
+    break;
+}
+
+switch (e.key) {
+  case "ArrowUp":
+    if (posYInimigo - velocidade >= -margemBorda && !colideComObstaculo(posXInimigo, posYInimigo - velocidade, frameWidth, frameHeight)) {
+      posYInimigo -= velocidade;
+      movidoInimigo = true;
+    }
+    break;
+  case "ArrowDown":
+    if (posYInimigo + frameHeight + velocidade <= canvas.height + margemBorda && !colideComObstaculo(posXInimigo, posYInimigo + velocidade, frameWidth, frameHeight)) {
+      posYInimigo += velocidade;
+      movidoInimigo = true;
+    }
+    break;
+  case "ArrowLeft":
+    if (posXInimigo - velocidade >= -margemBorda && !colideComObstaculo(posXInimigo - velocidade, posYInimigo, frameWidth, frameHeight)) {
+      posXInimigo -= velocidade;
+      movidoInimigo = true;
+    }
+    break;
+  case "ArrowRight":
+    if (posXInimigo + frameWidth + velocidade <= canvas.width + margemBorda && !colideComObstaculo(posXInimigo + velocidade, posYInimigo, frameWidth, frameHeight)) {
+      posXInimigo += velocidade;
+      movidoInimigo = true;
+    }
+    break;
+  case "/":
+    animarTiroInimigo();
+    break;
+}
+
+    if (movidoJogador) frameAtualJogador = frameAtualJogador === 0 ? 1 : 0;
+    if (movidoInimigo) frameAtualInimigo = frameAtualInimigo === 0 ? 1 : 0;
+
+    if (movidoJogador || movidoInimigo) draw();
+  });
+
+function loop() {
+  if (!jogoFinalizado) {
+    draw();
+    requestAnimationFrame(loop);
+  }
+}
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  loop();
+
+      document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        window.history.back();
+      } else {
+        mostrarDescricao(event.key);
+      }
+    });
+
+</script>
+</body>
+</html>
